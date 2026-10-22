@@ -19,3 +19,6 @@ Live: https://inkdesk-iota.vercel.app
 - Arabic and other non-Latin text you add is saved as an image.
 - Password-protected or restricted PDFs are not supported.
 - Not built: compress, conversion to/from Office, OCR, PDF/A, password protection, certificate signatures.
+
+## Visitor log
+On the public site, first-time visitors enter their name and email (stored in their browser, sent once to a Google Apps Script web app in `tracking/Code.gs`). New visitors are added to the owner's "Inkdesk visitors" Google Sheet and trigger an email; return visits update "Last visit" and "Visits". Build the hosted page with `./build.sh app.html > index.html`.

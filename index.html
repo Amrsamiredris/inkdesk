@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<script>window.INKDESK_TRACK="https://script.google.com/macros/s/AKfycbx8fWvtcVMmNUUbSDuC4tkJj6-bCeEsOdjByRtMTRT_pj53zoM7oP44UlIgcg8pu18-ew/exec";</script>
 </head>
 <body>
 <title>Inkdesk PDF</title>
@@ -263,6 +264,19 @@ kbd{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);border
 .th .del{position:absolute;top:6px;right:6px;width:26px;height:26px}
 .th .blank{width:70%;aspect-ratio:1/1.414;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18);display:grid;place-items:center;color:#9aa0ab;font-size:12px}
 @media (max-width:760px){.findbar input{width:96px}.keys{grid-template-columns:minmax(0,1fr)}}
+/* ---------- Welcome gate ---------- */
+.gate{position:fixed;inset:0;z-index:90;background:var(--bg);display:grid;place-items:center;overflow:auto;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+.gcard{width:min(440px,100%);background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:28px 26px;display:grid;gap:16px}
+.gcard h1{font-family:var(--f-display);font-size:30px;line-height:1.05;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.gcard p{margin:0;color:var(--muted)}
+.gcard .free{display:inline-flex;align-items:center;gap:8px;align-self:start;justify-self:start;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600}
+.gcard label{display:grid;gap:5px;font-size:13px;font-weight:500}
+.gcard input{border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:15px;background:var(--surface)}
+.gcard input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.gcard .err{color:var(--danger);font-size:13px;min-height:1em}
+.gcard .btn.primary{justify-content:center;padding:11px 14px;font-size:15px}
+.gcard .fine{font-size:12px;color:var(--muted)}
+.gcard .thanks{font-family:"Sacramento","Great Vibes",cursive;font-size:44px;color:var(--accent);line-height:1}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -456,6 +470,26 @@ kbd{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);border
     <div class="mrow"><h2 id="keysTitle">Keyboard shortcuts</h2><button class="iconbtn" id="keysClose" aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button></div>
     <div class="keys" id="keysList"></div>
     <p class="chk" style="margin:0">Single-letter keys follow Acrobat where Acrobat has one. On a Mac use Cmd instead of Ctrl.</p>
+  </div>
+</div>
+
+<div class="gate" id="gate" hidden>
+  <form class="gcard" id="gateForm" novalidate>
+    <div class="brand"><span class="brand-mark"><svg class="icon" style="width:17px;height:17px"><use href="#i-sign"/></svg></span>Inkdesk</div>
+    <span class="free">Free forever · no ads · no account</span>
+    <h1>Edit, sign and mark up PDFs, right in your browser.</h1>
+    <p>Amr made this for his friends. Leave your name and email so he knows you dropped by. Your PDFs never leave your device.</p>
+    <label for="gName">Your name<input id="gName" type="text" autocomplete="name" required maxlength="80"></label>
+    <label for="gEmail">Email<input id="gEmail" type="email" autocomplete="email" inputmode="email" required maxlength="160"></label>
+    <span class="err" id="gErr" role="alert"></span>
+    <button class="btn primary" type="submit">Start using Inkdesk</button>
+    <span class="fine">Your email only goes to Amr. No newsletters, no sharing.</span>
+  </form>
+  <div class="gcard" id="gateThanks" hidden>
+    <span class="thanks">Thank you!</span>
+    <h1 id="gThanksH">Amr says thank you.</h1>
+    <p>Inkdesk is yours to use, free forever. Every tool works on your device, so your files stay private.</p>
+    <button class="btn primary" type="button" id="gGo">Open the tools</button>
   </div>
 </div>
 
@@ -1815,8 +1849,38 @@ $('#rSplit').onclick = async () => {
   b.disabled = false;
 };
 
+/* ---------------- welcome gate (only on the public site) ---------------- */
+const GATE = { url: window.INKDESK_TRACK || '' };
+function logVisit(kind, who) {
+  if (!GATE.url) return;
+  const body = JSON.stringify({ kind, name: who.name, email: who.email, ua: navigator.userAgent.slice(0, 280), ref: document.referrer.slice(0, 280) });
+  try { fetch(GATE.url, { method: 'POST', mode: 'no-cors', body, keepalive: true }); } catch {}
+}
+function initGate() {
+  if (!GATE.url) return;
+  const me = store.get('visitor', null);
+  if (me && me.email) {
+    let pinged = false; try { pinged = sessionStorage.getItem('inkdesk.pinged') === '1'; sessionStorage.setItem('inkdesk.pinged', '1'); } catch {}
+    if (!pinged) logVisit('visit', me);
+    return;
+  }
+  $('#gate').hidden = false; setTimeout(() => $('#gName').focus(), 50);
+  $('#gateForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('#gName').value.trim(), email = $('#gEmail').value.trim().toLowerCase();
+    if (!name) { $('#gErr').textContent = 'Add your name so Amr knows who you are.'; $('#gName').focus(); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { $('#gErr').textContent = 'That email doesn\'t look right. Check it and try again.'; $('#gEmail').focus(); return; }
+    const who = { name, email };
+    store.set('visitor', who); try { sessionStorage.setItem('inkdesk.pinged', '1'); } catch {}
+    logVisit('signup', who);
+    $('#gThanksH').textContent = `Amr says thank you, ${name.split(/\s+/)[0]}.`;
+    $('#gateForm').hidden = true; $('#gateThanks').hidden = false; $('#gGo').focus();
+  });
+  $('#gGo').onclick = () => { $('#gate').hidden = true; };
+}
+
 /* ---------------- boot ---------------- */
-buildHome(); buildRail(); renderProps();
+buildHome(); buildRail(); renderProps(); initGate();
 // opening a file dropped anywhere on the editor
 document.addEventListener('dragover', e => { if (!$('#editor').hidden) e.preventDefault(); });
 document.addEventListener('drop', e => { if ($('#editor').hidden) return; e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && /pdf/i.test(f.type + f.name)) openFile(f, S.tool); });
