@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FrN6bTo1AlPsuGlIYJIrG2dxHvtdL/csV4TPatvXzbg=' 'sha256-Keg7SL2qTXU9V52YZDSxMagukPUc6QqPUoWTMjFktLU='; worker-src 'self' blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; img-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'none'; manifest-src 'self'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
@@ -13,9 +15,7 @@
 <body>
 <title>Inkdesk PDF</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600&family=Caveat:wght@600&family=Dancing+Script:wght@600&family=Great+Vibes&family=Sacramento&display=swap">
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
 <style>
 /* Layout: Apple-style. Quiet grey canvas, white grouped surfaces, frosted toolbars, one tint (system blue).
    Colors follow the visitor's device: light by default, dark when the device is in dark mode. */
@@ -127,6 +127,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .tool.soon .ti{background:var(--c-gray);opacity:.55}
 .tool.soon b,.tool.soon small{opacity:.6}
 .chip{font-size:11px;font-weight:600;border-radius:999px;padding:1px 7px;margin-left:6px;background:var(--fill);color:var(--muted);vertical-align:2px;letter-spacing:0}
+.foot a,.gcard .fine a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.foot a:hover{color:var(--ink)}
 .foot{max-width:1080px;margin:0 auto;padding-block:22px 40px;border-top:.5px solid var(--line);color:var(--faint);font-size:12px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;letter-spacing:-.005em}
 .dropveil{position:fixed;inset:0;z-index:70;background:color-mix(in srgb,var(--accent) 14%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:grid;place-items:center;pointer-events:none}
 .dropveil div{background:var(--surface);color:var(--accent);font-weight:600;font-size:19px;padding:22px 34px;border-radius:20px;box-shadow:var(--shadow-lg);border:2px dashed var(--accent)}
@@ -394,6 +396,7 @@ input[type=checkbox].switch,.dlpop input[type=checkbox],#sigModal input[type=che
 
   <footer class="foot gut">
     <span>Inkdesk runs on open-source pdf.js and pdf-lib.</span>
+    <span id="legalLinks" hidden><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="licenses.html">Open-source licenses</a></span>
     <span>Made by Amr Samir Edris.</span>
   </footer>
   <div class="dropveil" id="dropVeil" hidden><div>Drop to open your PDF</div></div>
@@ -525,7 +528,7 @@ input[type=checkbox].switch,.dlpop input[type=checkbox],#sigModal input[type=che
     </div>
     <span class="err" id="gErr" role="alert"></span>
     <button class="btn primary" type="submit">Start using Inkdesk</button>
-    <span class="fine">Your email only goes to Amr. No newsletters, no sharing.</span>
+    <span class="fine">By continuing, you agree that Amr may keep your name and email to see who uses Inkdesk. He won’t share them or send newsletters, and you can ask him to delete them at any time. See the <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a> and <a href="terms.html" target="_blank" rel="noopener">Terms of Use</a>.</span>
   </form>
   <div class="gcard" id="gateThanks" hidden>
     <span class="appicon lg" style="width:64px;height:64px;border-radius:15px;background:linear-gradient(180deg,#4CD964,#28A745)"><svg class="icon" style="width:34px;height:34px" aria-hidden="true"><use href="#i-check"/></svg></span>
@@ -543,11 +546,11 @@ input[type=checkbox].switch,.dlpop input[type=checkbox],#sigModal input[type=che
 <input type="file" id="rIn" accept="application/pdf,.pdf" hidden>
 <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="vendor/jszip.min.js"></script>
 <script type="module">
-import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs';
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+import * as pdfjsLib from './vendor/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('vendor/pdf.worker.min.mjs', document.baseURI).href;
 const { PDFDocument, StandardFonts, rgb, degrees, PDFName, PDFString, PDFHexString, PDFBool, BlendMode, LineCapStyle } = PDFLib;
 
 /* ---------------- helpers ---------------- */
@@ -1900,11 +1903,21 @@ $('#rSplit').onclick = async () => {
 const GATE = { url: window.INKDESK_TRACK || '' };
 function logVisit(kind, who) {
   if (!GATE.url) return;
-  const body = JSON.stringify({ kind, name: who.name, email: who.email, ua: navigator.userAgent.slice(0, 280), ref: document.referrer.slice(0, 280) });
+  const body = JSON.stringify({ kind, name: who.name, email: who.email, ua: deviceSummary(), ref: refSummary() });
   try { fetch(GATE.url, { method: 'POST', mode: 'no-cors', body, keepalive: true }); } catch {}
 }
+// Only coarse device and source info is sent: no full user-agent string, no full referring URL.
+function deviceSummary() {
+  const u = navigator.userAgent;
+  const os = /iPhone|iPad|iPod/.test(u) ? 'iOS' : /Android/.test(u) ? 'Android' : /Mac OS X/.test(u) ? 'macOS' : /Windows/.test(u) ? 'Windows' : /Linux/.test(u) ? 'Linux' : 'Other';
+  const br = /Edg\//.test(u) ? 'Edge' : /OPR\//.test(u) ? 'Opera' : /Chrome\//.test(u) ? 'Chrome' : /Firefox\//.test(u) ? 'Firefox' : /Safari\//.test(u) ? 'Safari' : 'Other';
+  const kind = /Mobi|iPhone|Android.+Mobile/.test(u) ? 'phone' : /iPad|Tablet|Android/.test(u) ? 'tablet' : 'computer';
+  return `${br} on ${os} (${kind})`;
+}
+function refSummary() { try { return document.referrer ? new URL(document.referrer).hostname : ''; } catch { return ''; } }
 function initGate() {
   if (!GATE.url) return;
+  $('#legalLinks').hidden = false;
   const me = store.get('visitor', null);
   if (me && me.email) {
     let pinged = false; try { pinged = sessionStorage.getItem('inkdesk.pinged') === '1'; sessionStorage.setItem('inkdesk.pinged', '1'); } catch {}

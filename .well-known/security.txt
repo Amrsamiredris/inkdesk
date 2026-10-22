@@ -1,0 +1,5 @@
+Contact: mailto:amrsamiredris@gmail.com
+Expires: 2027-10-22T00:00:00.000Z
+Preferred-Languages: en, ar
+Canonical: https://inkdesk-iota.vercel.app/.well-known/security.txt
+Policy: https://inkdesk-iota.vercel.app/privacy.html

@@ -21,4 +21,13 @@ Live: https://inkdesk-iota.vercel.app
 - Not built: compress, conversion to/from Office, OCR, PDF/A, password protection, certificate signatures.
 
 ## Visitor log
-On the public site, first-time visitors enter their name and email (stored in their browser, sent once to a Google Apps Script web app in `tracking/Code.gs`). New visitors are added to the owner's "Inkdesk visitors" Google Sheet and trigger an email; return visits update "Last visit" and "Visits". Build the hosted page with `./build.sh app.html > index.html`.
+On the public site, first-time visitors enter their name and email (stored in their browser, sent once to a Google Apps Script web app in `tracking/Code.gs`). New visitors are added to the owner's "Inkdesk visitors" Google Sheet and trigger an email; return visits update "Last visit" and "Visits". 
+
+## Build
+`python3 build.py app.html path/to/node_modules` produces `index.html`, `vendor/` (self-hosted pdf.js, pdf-lib, JSZip, fonts and their licences) and `vercel.json` (security headers with a hash-based Content-Security-Policy).
+
+## Privacy & security
+- No third-party requests from visitors except the opt-in visitor log (Google Apps Script). Libraries and fonts are self-hosted.
+- No cookies, analytics or ads. Local storage only for user-requested features (listed in `privacy.html`).
+- Headers: CSP (hashed inline scripts, `frame-ancestors 'none'`), HSTS, nosniff, `X-Frame-Options: DENY`, strict referrer, Permissions-Policy, COOP/CORP.
+- `privacy.html`, `terms.html`, `licenses.html`, `.well-known/security.txt`.
