@@ -1,3 +1,11 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
 <title>Inkdesk PDF</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1385,3 +1393,6 @@ buildHome(); buildRail(); renderProps();
 document.addEventListener('dragover', e => { if (!$('#editor').hidden) e.preventDefault(); });
 document.addEventListener('drop', e => { if ($('#editor').hidden) return; e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && /pdf/i.test(f.type + f.name)) openFile(f, S.tool); });
 </script>
+
+</body>
+</html>
