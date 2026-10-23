@@ -22,7 +22,11 @@ REPL = {
     "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs": "./vendor/pdf.worker.min.mjs",
     "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js": "vendor/pdf-lib.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js": "vendor/jszip.min.js",
+    "https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.js": "vendor/qpdf/qpdf.js",
+    "https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.wasm": "vendor/qpdf/qpdf.wasm",
 }
+REPL["const LO_BASE = 'https://cdn.jsdelivr.net/npm/@bentopdf/libreoffice-wasm@2.3.1/assets/';"] = "const LO_BASE = 'vendor/lo/';"
+REPL["const LO_MIRRORS = [];"] = "const LO_MIRRORS = ['https://amrsamiredris.github.io/inkdesk/vendor/lo/'];"
 for a, b in REPL.items():
     assert a in app, a
     app = app.replace(a, b)
@@ -39,6 +43,14 @@ if NM:
     shutil.copy(NM / 'pdfjs-dist/build/pdf.worker.min.mjs', v)
     shutil.copy(NM / 'pdf-lib/dist/pdf-lib.min.js', v)
     shutil.copy(NM / 'jszip/dist/jszip.min.js', v)
+    LO_PKG = pathlib.Path(sys.argv[3]) if len(sys.argv) > 3 else None
+    if LO_PKG:
+        (v / 'lo').mkdir(exist_ok=True)
+        for fn in ['soffice.js', 'soffice.worker.js', 'browser.worker.global.js', 'soffice.wasm.gz', 'soffice.data.gz']:
+            shutil.copy(LO_PKG / fn, v / 'lo' / fn)
+    (v / 'qpdf').mkdir(exist_ok=True)
+    shutil.copy(NM / '@neslinesli93/qpdf-wasm/dist/qpdf.js', v / 'qpdf')
+    shutil.copy(NM / '@neslinesli93/qpdf-wasm/dist/qpdf.wasm', v / 'qpdf')
     faces = [('Sacramento', 'sacramento', [400]), ('Great Vibes', 'great-vibes', [400]), ('Dancing Script', 'dancing-script', [600]),
              ('Caveat', 'caveat', [600]), ('IBM Plex Sans Arabic', 'ibm-plex-sans-arabic', [400, 600])]
     css = ['/* Self-hosted fonts (SIL Open Font License 1.1). */']
@@ -57,13 +69,24 @@ if NM:
     shutil.copy(NM / 'pdf-lib/LICENSE.md', lic / 'pdf-lib-MIT.txt')
     shutil.copy(NM / 'jszip/LICENSE.markdown', lic / 'jszip-MIT-or-GPLv3.txt')
     shutil.copy(NM / '@fontsource/sacramento/LICENSE', lic / 'fonts-OFL-1.1.txt')
+    (lic / 'libreoffice-MPL-2.0.txt').write_text(
+        "LibreOffice (https://www.libreoffice.org), copyright The Document Foundation and contributors,\n"
+        "is licensed under the Mozilla Public License 2.0: https://www.mozilla.org/MPL/2.0/\n"
+        "Source code: https://git.libreoffice.org/core\n\n"
+        "The WebAssembly build used here is @bentopdf/libreoffice-wasm 2.3.1 (MPL-2.0), unmodified:\n"
+        "https://www.npmjs.com/package/@bentopdf/libreoffice-wasm\n")
+    (lic / 'qpdf-Apache-2.0.txt').write_text(
+        "qpdf 12.2.0 (https://github.com/qpdf/qpdf), copyright Jay Berkenbilt and contributors,\n"
+        "is licensed under the Apache License, Version 2.0: https://www.apache.org/licenses/LICENSE-2.0\n\n"
+        "The WebAssembly build is from qpdf-wasm (https://github.com/neslinesli93/qpdf-wasm), licensed under the ISC License.\n"
+        "It is used unmodified.\n")
 
 # 2. Content-Security-Policy with hashes of the inline scripts
 track_js = f'window.INKDESK_TRACK={json.dumps(TRACK_URL)};'
 inline = [track_js] + re.findall(r'<script type="module">([\s\S]*?)</script>', app)
 hashes = ' '.join("'sha256-%s'" % base64.b64encode(hashlib.sha256(x.encode()).digest()).decode() for x in inline)
-csp = ("default-src 'self'; script-src 'self' " + hashes + "; worker-src 'self' blob:; "
-       "connect-src 'self' https://script.google.com https://script.googleusercontent.com; "
+csp = ("default-src 'self'; script-src 'self' 'wasm-unsafe-eval' " + hashes + "; worker-src 'self' blob:; "
+       "connect-src 'self' blob: https://script.google.com https://script.googleusercontent.com https://amrsamiredris.github.io; "
        "img-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; "
        "object-src 'none'; base-uri 'self'; form-action 'none'; manifest-src 'self'")
 
@@ -95,11 +118,17 @@ headers = [
     {"key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), browsing-topics=()"},
     {"key": "Cross-Origin-Opener-Policy", "value": "same-origin"},
     {"key": "Cross-Origin-Resource-Policy", "value": "same-site"},
+    {"key": "Cross-Origin-Embedder-Policy", "value": "require-corp"},
 ]
+# The LibreOffice engine's worker scripts need eval (Emscripten embind); allow it only for those files.
+lo_csp = ("default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; "
+          "connect-src 'self' blob: https://amrsamiredris.github.io; object-src 'none'; base-uri 'self'")
+lo_headers = [h for h in headers if h["key"] != "Content-Security-Policy"] + [{"key": "Content-Security-Policy", "value": lo_csp}]
 cfg = {
     "cleanUrls": False,
     "headers": [
-        {"source": "/(.*)", "headers": headers},
+        {"source": "/((?!vendor/lo/).*)", "headers": headers},
+        {"source": "/vendor/lo/(.*)", "headers": lo_headers},
         {"source": "/vendor/(.*)", "headers": [{"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}]},
     ],
 }

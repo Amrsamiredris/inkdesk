@@ -1,0 +1,5 @@
+qpdf 12.2.0 (https://github.com/qpdf/qpdf), copyright Jay Berkenbilt and contributors,
+is licensed under the Apache License, Version 2.0: https://www.apache.org/licenses/LICENSE-2.0
+
+The WebAssembly build is from qpdf-wasm (https://github.com/neslinesli93/qpdf-wasm), licensed under the ISC License.
+It is used unmodified.

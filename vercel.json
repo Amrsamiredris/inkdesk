@@ -2,11 +2,11 @@
   "cleanUrls": false,
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/((?!vendor/lo/).*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'sha256-FrN6bTo1AlPsuGlIYJIrG2dxHvtdL/csV4TPatvXzbg=' 'sha256-Keg7SL2qTXU9V52YZDSxMagukPUc6QqPUoWTMjFktLU='; worker-src 'self' blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; img-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'none'; manifest-src 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-FrN6bTo1AlPsuGlIYJIrG2dxHvtdL/csV4TPatvXzbg=' 'sha256-Qnu6QBh5ThdE9fb57KVofhMEAAR/1Z9HxMjVj6d492I='; worker-src 'self' blob:; connect-src 'self' blob: https://script.google.com https://script.googleusercontent.com https://amrsamiredris.github.io; img-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'none'; manifest-src 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
         },
         {
           "key": "Strict-Transport-Security",
@@ -35,6 +35,51 @@
         {
           "key": "Cross-Origin-Resource-Policy",
           "value": "same-site"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "require-corp"
+        }
+      ]
+    },
+    {
+      "source": "/vendor/lo/(.*)",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), browsing-topics=()"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "same-site"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "require-corp"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' blob: https://amrsamiredris.github.io; object-src 'none'; base-uri 'self'"
         }
       ]
     },
